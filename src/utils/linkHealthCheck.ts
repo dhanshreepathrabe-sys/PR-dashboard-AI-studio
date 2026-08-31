@@ -43,6 +43,58 @@ function resolveHealth(url: string): Pick<LinkHealthRecord, "status" | "statusCo
   };
 }
 
+export interface LiveCheckResult {
+  url: string;
+  ok: boolean;
+  statusCode: number | null;
+  finalUrl: string | null;
+  error: string | null;
+  checkedAt: string;
+}
+
+/**
+ * Calls the server-side /api/verify-links proxy to run real HEAD/GET requests against
+ * a batch of external URLs (avoids browser CORS restrictions on cross-origin news sites).
+ * Sends requests in chunks so a large link set doesn't exceed the server's per-call cap,
+ * and reports progress after each chunk resolves.
+ */
+export async function liveVerifyUrls(
+  urls: string[],
+  onProgress?: (checked: number, total: number) => void
+): Promise<Map<string, LiveCheckResult>> {
+  const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
+  const results = new Map<string, LiveCheckResult>();
+  const CHUNK_SIZE = 100;
+
+  for (let i = 0; i < uniqueUrls.length; i += CHUNK_SIZE) {
+    const chunk = uniqueUrls.slice(i, i + CHUNK_SIZE);
+    try {
+      const res = await fetch("/api/verify-links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls: chunk }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        for (const r of data.results || []) {
+          results.set(r.url, r);
+        }
+      } else {
+        for (const u of chunk) {
+          results.set(u, { url: u, ok: false, statusCode: null, finalUrl: null, error: `Server responded ${res.status}`, checkedAt: new Date().toISOString() });
+        }
+      }
+    } catch (err: any) {
+      for (const u of chunk) {
+        results.set(u, { url: u, ok: false, statusCode: null, finalUrl: null, error: err?.message || "Network error", checkedAt: new Date().toISOString() });
+      }
+    }
+    onProgress?.(Math.min(i + CHUNK_SIZE, uniqueUrls.length), uniqueUrls.length);
+  }
+
+  return results;
+}
+
 export function getAllAppUrls(): LinkHealthRecord[] {
   const records: LinkHealthRecord[] = [];
 

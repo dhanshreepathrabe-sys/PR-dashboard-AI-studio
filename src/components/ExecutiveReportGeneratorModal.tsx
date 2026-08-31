@@ -59,9 +59,13 @@ export const ExecutiveReportGeneratorModal: React.FC<ExecutiveReportGeneratorMod
 
   // Format date range text
   const dateRangeText = useMemo(() => {
+    const today = new Date();
+    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    if (filters.dateRange === "today") return `Today (${fmt(today)})`;
     if (filters.dateRange === "7") return "Last 7 Days (12 Aug 2026 – 19 Aug 2026)";
     if (filters.dateRange === "30") return "Last 30 Days (20 Jul 2026 – 19 Aug 2026)";
     if (filters.dateRange === "90") return "Last 90 Days (20 May 2026 – 19 Aug 2026)";
+    if (filters.dateRange === "ytd") return `Year-to-Date (1 Jan ${today.getFullYear()} – ${fmt(today)})`;
     return "1 Aug 2026 – 19 Aug 2026 (All Tracked Period)";
   }, [filters.dateRange]);
 

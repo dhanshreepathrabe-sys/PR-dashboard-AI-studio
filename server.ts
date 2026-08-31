@@ -684,6 +684,107 @@ Return raw JSON array only.`;
   });
 });
 
+// Live Link Verification Endpoint - performs a real HEAD (falling back to GET) request
+// server-side so the browser isn't blocked by CORS, and reports the true HTTP outcome.
+async function liveCheckUrl(rawUrl: string): Promise<{
+  url: string;
+  ok: boolean;
+  statusCode: number | null;
+  finalUrl: string | null;
+  error: string | null;
+}> {
+  if (!rawUrl || typeof rawUrl !== "string" || !/^https?:\/\//i.test(rawUrl)) {
+    return { url: rawUrl, ok: false, statusCode: null, finalUrl: null, error: "Invalid or non-HTTP(S) URL" };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+  const commonHeaders = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  };
+
+  try {
+    let res = await fetch(rawUrl, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: commonHeaders,
+    });
+
+    // Some servers reject HEAD (405/403) but serve GET fine - retry with GET in that case.
+    if (res.status === 405 || res.status === 403 || res.status === 501) {
+      res = await fetch(rawUrl, {
+        method: "GET",
+        redirect: "follow",
+        signal: controller.signal,
+        headers: commonHeaders,
+      });
+    }
+
+    clearTimeout(timeout);
+    return {
+      url: rawUrl,
+      ok: res.ok,
+      statusCode: res.status,
+      finalUrl: res.url && res.url !== rawUrl ? res.url : null,
+      error: null,
+    };
+  } catch (err: any) {
+    clearTimeout(timeout);
+    return {
+      url: rawUrl,
+      ok: false,
+      statusCode: null,
+      finalUrl: null,
+      error: err?.name === "AbortError" ? "Timed out after 7s" : err?.message || "Network error",
+    };
+  }
+}
+
+// Runs live checks with a bounded concurrency so a large batch doesn't hammer target sites.
+async function liveCheckBatch(urls: string[], concurrency = 8) {
+  const results: Awaited<ReturnType<typeof liveCheckUrl>>[] = [];
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < urls.length) {
+      const idx = cursor++;
+      results[idx] = await liveCheckUrl(urls[idx]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, urls.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+app.post("/api/verify-link", async (req, res) => {
+  const { url } = req.body || {};
+  if (!url || typeof url !== "string") {
+    return res.status(400).json({ error: "Missing 'url' string in request body" });
+  }
+  const result = await liveCheckUrl(url);
+  res.json({ ...result, checkedAt: new Date().toISOString() });
+});
+
+app.post("/api/verify-links", async (req, res) => {
+  const { urls } = req.body || {};
+  if (!Array.isArray(urls) || urls.length === 0) {
+    return res.status(400).json({ error: "Missing non-empty 'urls' array in request body" });
+  }
+  // Cap a single batch request so one client call can't trigger an unbounded fan-out.
+  const capped = urls.slice(0, 300);
+  const results = await liveCheckBatch(capped, 8);
+  res.json({
+    checkedAt: new Date().toISOString(),
+    count: results.length,
+    truncated: urls.length > capped.length,
+    results,
+  });
+});
+
 // Vite Integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

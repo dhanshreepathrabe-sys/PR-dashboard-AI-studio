@@ -38,6 +38,7 @@ import { FilterBar } from "./components/FilterBar";
 import { KPICards } from "./components/KPICards";
 import { AIBriefingBanner } from "./components/AIBriefingBanner";
 import { CoverageFeed } from "./components/CoverageFeed";
+import { TrendingKeywordsCloud } from "./components/TrendingKeywordsCloud";
 import { SentimentCharts } from "./components/SentimentCharts";
 import { AIChatDrawer } from "./components/AIChatDrawer";
 import { AddMentionModal } from "./components/AddMentionModal";
@@ -234,11 +235,19 @@ export default function App() {
     }
 
     if (filters.dateRange !== "all") {
-      const days = parseInt(filters.dateRange);
-      const mentionDate = new Date(item.date).getTime();
-      const now = new Date().getTime(); // current live time horizon
-      const diffDays = (now - mentionDate) / (1000 * 3600 * 24);
-      if (diffDays > days) return false;
+      const mentionDate = new Date(item.date);
+      const now = new Date();
+
+      if (filters.dateRange === "today") {
+        if (mentionDate.toDateString() !== now.toDateString()) return false;
+      } else if (filters.dateRange === "ytd") {
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        if (mentionDate < yearStart || mentionDate > now) return false;
+      } else {
+        const days = parseInt(filters.dateRange, 10);
+        const diffDays = (now.getTime() - mentionDate.getTime()) / (1000 * 3600 * 24);
+        if (diffDays > days) return false;
+      }
     }
 
     return true;
@@ -647,6 +656,12 @@ export default function App() {
 
                 {/* Visual Analytics Row */}
                 <SentimentCharts mentions={filteredMentions} competitorSOV={COMPETITORS} />
+
+                {/* Top Trending Keywords / Topics */}
+                <TrendingKeywordsCloud
+                  mentions={filteredMentions}
+                  onSelectKeyword={(theme) => handleFilterChange({ searchQuery: theme })}
+                />
 
                 {/* Primary Coverage Highlights */}
                 <div className="space-y-3">

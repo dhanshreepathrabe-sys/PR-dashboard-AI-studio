@@ -162,9 +162,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               className="w-full bg-slate-50 text-slate-800 font-medium border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
             >
               <option value="all">All Time</option>
+              <option value="today">Today</option>
               <option value="7">Last 7 Days</option>
               <option value="30">Last 30 Days</option>
               <option value="90">Last 90 Days</option>
+              <option value="ytd">Year-to-Date</option>
             </select>
           </div>
 

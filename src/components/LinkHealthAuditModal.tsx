@@ -1,20 +1,21 @@
 import React, { useState, useMemo } from "react";
-import { getAllAppUrls, LinkHealthRecord } from "../utils/linkHealthCheck";
+import { getAllAppUrls, liveVerifyUrls, LinkHealthRecord, LiveCheckResult } from "../utils/linkHealthCheck";
 import { ensureAbsoluteUrl } from "../utils/linkHelper";
-import { 
-  ShieldCheck, 
-  ExternalLink, 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertTriangle, 
-  XCircle, 
-  HelpCircle, 
-  Copy, 
-  Check, 
+import {
+  ShieldCheck,
+  ExternalLink,
+  Search,
+  Filter,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  HelpCircle,
+  Copy,
+  Check,
   X,
-  Globe
+  Globe,
+  Radio
 } from "lucide-react";
 
 interface LinkHealthAuditModalProps {
@@ -32,6 +33,9 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
   const [sourceFilter, setSourceFilter] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [liveResults, setLiveResults] = useState<Map<string, LiveCheckResult>>(new Map());
+  const [liveScanning, setLiveScanning] = useState(false);
+  const [liveProgress, setLiveProgress] = useState<{ checked: number; total: number } | null>(null);
 
   const matchesStatCardFilter = (r: LinkHealthRecord) => {
     switch (statCardFilter) {
@@ -106,6 +110,54 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
     }, 800);
   };
 
+  // Performs a real, live HTTP check (via the server-side proxy, to avoid browser CORS
+  // limits on cross-origin news sites) against every currently-filtered link, so the
+  // audit reflects the link's actual status right now rather than only the last offline scan.
+  const handleLiveVerify = async () => {
+    setLiveScanning(true);
+    setLiveProgress({ checked: 0, total: filteredRecords.length });
+    const urls = filteredRecords.map((r) => r.sanitizedUrl);
+    try {
+      const results = await liveVerifyUrls(urls, (checked, total) => setLiveProgress({ checked, total }));
+      setLiveResults((prev) => {
+        const merged = new Map(prev);
+        results.forEach((v, k) => merged.set(k, v));
+        return merged;
+      });
+    } finally {
+      setLiveScanning(false);
+      setLiveProgress(null);
+    }
+  };
+
+  // 401/403/429 usually mean an anti-bot gate rejected our server-side request (common on
+  // LinkedIn, Twitter/X, and similar platforms that block non-browser traffic) rather than
+  // proof the link is actually dead - a real browser visiting the same URL often works fine.
+  // Only 404/410/5xx/network failures are confidently reported as broken.
+  const classifyLive = (live: LiveCheckResult): "live" | "blocked" | "broken" => {
+    if (live.ok) return "live";
+    if (live.statusCode === 401 || live.statusCode === 403 || live.statusCode === 429) return "blocked";
+    return "broken";
+  };
+
+  const liveSummary = useMemo(() => {
+    let live200 = 0;
+    let liveBlocked = 0;
+    let liveBroken = 0;
+    let liveChecked = 0;
+    filteredRecords.forEach((r) => {
+      const live = liveResults.get(r.sanitizedUrl);
+      if (live) {
+        liveChecked++;
+        const cls = classifyLive(live);
+        if (cls === "live") live200++;
+        else if (cls === "blocked") liveBlocked++;
+        else liveBroken++;
+      }
+    });
+    return { live200, liveBlocked, liveBroken, liveChecked };
+  }, [filteredRecords, liveResults]);
+
   if (!isOpen) return null;
 
   return (
@@ -130,6 +182,17 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleLiveVerify}
+              disabled={liveScanning || filteredRecords.length === 0}
+              title="Runs real HTTP HEAD/GET requests right now against every link matching the current filter"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-sm transition-colors"
+            >
+              <Radio className={`w-3.5 h-3.5 ${liveScanning ? "animate-pulse" : ""}`} />
+              {liveScanning
+                ? `Live verifying${liveProgress ? ` ${liveProgress.checked}/${liveProgress.total}` : "..."}`
+                : `Live Verify ${filteredRecords.length} Shown Links`}
+            </button>
             <button
               onClick={handleScanAll}
               disabled={scanning}
@@ -215,6 +278,25 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
           </div>
         )}
 
+        {liveSummary.liveChecked > 0 && (
+          <div className="px-4 py-2 bg-emerald-950/40 border-b border-emerald-900/40 flex items-center gap-3 text-[11px] text-emerald-300">
+            <Radio className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              Live-verified <span className="font-bold text-white">{liveSummary.liveChecked}</span> of{" "}
+              {filteredRecords.length} shown links just now:{" "}
+              <span className="font-bold text-emerald-300">{liveSummary.live200} confirmed live (200 OK)</span>,{" "}
+              <span className="font-bold text-rose-300">{liveSummary.liveBroken} broken right now</span>
+              {liveSummary.liveBlocked > 0 && (
+                <>
+                  , <span className="font-bold text-amber-300">{liveSummary.liveBlocked} blocked by anti-bot protection</span>{" "}
+                  <span className="text-emerald-400/70">(likely still fine in a real browser)</span>
+                </>
+              )}
+              .
+            </span>
+          </div>
+        )}
+
         {/* Filters & Search */}
         <div className="p-4 border-b border-[#2D3A28] flex flex-wrap gap-3 items-center justify-between bg-[#151C13]">
           <div className="relative flex-1 min-w-[240px]">
@@ -252,13 +334,15 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
               No link records match the current filter.
             </div>
           ) : (
-            filteredRecords.map((r) => (
+            filteredRecords.map((r) => {
+              const live = liveResults.get(r.sanitizedUrl);
+              return (
               <div
                 key={r.id}
                 className="bg-[#202B1D] border border-[#2D3A28] hover:border-[#3E4F38] rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors text-xs"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="px-2 py-0.5 rounded bg-[#151C13] border border-[#2D3A28] text-[10px] font-mono text-emerald-400">
                       {r.sourceType}
                     </span>
@@ -272,6 +356,36 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
                       {STATUS_STYLES[r.status].label}
                       {typeof r.statusCode === "number" && r.statusCode > 0 ? ` (${r.statusCode})` : ""}
                     </span>
+                    {live && (() => {
+                      const cls = classifyLive(live);
+                      const style =
+                        cls === "live"
+                          ? "bg-emerald-900/60 text-emerald-300 border-emerald-700/60"
+                          : cls === "blocked"
+                          ? "bg-amber-900/60 text-amber-300 border-amber-700/60"
+                          : "bg-rose-900/60 text-rose-300 border-rose-700/60";
+                      const label =
+                        cls === "live"
+                          ? `${live.statusCode} OK`
+                          : cls === "blocked"
+                          ? `${live.statusCode} blocked (anti-bot)`
+                          : live.error
+                          ? live.error
+                          : `${live.statusCode ?? "ERR"} FAILED`;
+                      return (
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[10px] border font-mono flex items-center gap-1 ${style}`}
+                          title={
+                            cls === "blocked"
+                              ? "Server-side request was rejected by anti-bot protection - a real browser visiting this URL is likely unaffected."
+                              : live.error || "Live-checked just now via server-side HEAD/GET"
+                          }
+                        >
+                          <Radio className="w-3 h-3" />
+                          LIVE: {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="text-gray-300 font-medium line-clamp-1 mb-1">
                     {r.headline}
@@ -313,7 +427,8 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
                   </a>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

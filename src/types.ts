@@ -25,7 +25,7 @@ export interface MediaMention {
 
 export interface FilterState {
   campaign: string;
-  dateRange: "7" | "30" | "90" | "all";
+  dateRange: "today" | "7" | "30" | "90" | "ytd" | "all";
   country: string;
   categoryTier: string; // "all", "A", "B", "C", "Wire"
   sentiment: string; // "all", "positive", "neutral", "negative", "mixed"
