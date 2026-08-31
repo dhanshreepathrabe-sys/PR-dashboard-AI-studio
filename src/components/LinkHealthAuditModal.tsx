@@ -28,10 +28,25 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
 }) => {
   const [records, setRecords] = useState<LinkHealthRecord[]>(() => getAllAppUrls());
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statCardFilter, setStatCardFilter] = useState<"ALL" | "VALID" | "REDIRECTED" | "BROKEN" | "SEARCH_FALLBACK">("ALL");
   const [sourceFilter, setSourceFilter] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+
+  const matchesStatCardFilter = (r: LinkHealthRecord) => {
+    switch (statCardFilter) {
+      case "ALL":
+        return true;
+      case "VALID":
+        return r.status === "VALID";
+      case "REDIRECTED":
+        return r.status === "REDIRECTED";
+      case "BROKEN":
+        return r.status === "BROKEN" || r.status === "PAGE NOT FOUND" || r.status === "NO_PERMALINK";
+      case "SEARCH_FALLBACK":
+        return r.originalUrl.includes("news.google.com/search");
+    }
+  };
 
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
@@ -42,12 +57,11 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
         r.originalUrl.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.sanitizedUrl.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchStatus = statusFilter === "ALL" || r.status === statusFilter;
       const matchSource = sourceFilter === "ALL" || r.sourceType === sourceFilter;
 
-      return matchSearch && matchStatus && matchSource;
+      return matchSearch && matchSource && matchesStatCardFilter(r);
     });
-  }, [records, searchTerm, statusFilter, sourceFilter]);
+  }, [records, searchTerm, sourceFilter, statCardFilter]);
 
   const stats = useMemo(() => {
     const total = records.length;
@@ -60,6 +74,13 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
     const searchFallback = records.filter((r) => r.originalUrl.includes("news.google.com/search")).length;
     return { total, valid, redirected, broken, unverified, searchFallback };
   }, [records]);
+
+  const STAT_CARD_LABELS: Record<Exclude<typeof statCardFilter, "ALL">, string> = {
+    VALID: "Valid & Verified",
+    REDIRECTED: "Redirected",
+    BROKEN: "Broken / 404",
+    SEARCH_FALLBACK: "Google News Fallback"
+  };
 
   const STATUS_STYLES: Record<LinkHealthRecord["status"], { label: string; className: string }> = {
     VALID: { label: "HTTP 200 OK", className: "bg-emerald-950/80 text-emerald-400 border-emerald-800/60" },
@@ -126,37 +147,73 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
           </div>
         </div>
 
-        {/* Health Metric Cards */}
+        {/* Health Metric Cards - click one to filter the list below to that status */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-4 bg-[#182016] border-b border-[#2D3A28] text-xs">
-          <div className="bg-[#202B1D] border border-[#2D3A28] p-3 rounded-xl">
+          <button
+            onClick={() => setStatCardFilter("ALL")}
+            className={`text-left bg-[#202B1D] border p-3 rounded-xl transition-colors cursor-pointer hover:border-white/30 ${
+              statCardFilter === "ALL" ? "border-white ring-1 ring-white/40" : "border-[#2D3A28]"
+            }`}
+          >
             <div className="text-gray-400 mb-1">Total Monitored URLs</div>
             <div className="text-xl font-bold text-white font-mono">{stats.total}</div>
-          </div>
-          <div className="bg-[#202B1D] border border-emerald-500/20 p-3 rounded-xl">
+          </button>
+          <button
+            onClick={() => setStatCardFilter((f) => (f === "VALID" ? "ALL" : "VALID"))}
+            className={`text-left bg-[#202B1D] border p-3 rounded-xl transition-colors cursor-pointer hover:border-emerald-400/60 ${
+              statCardFilter === "VALID" ? "border-emerald-400 ring-1 ring-emerald-400/40" : "border-emerald-500/20"
+            }`}
+          >
             <div className="text-emerald-400 flex items-center gap-1 mb-1 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" /> Valid & Verified
             </div>
             <div className="text-xl font-bold text-emerald-300 font-mono">{stats.valid}</div>
-          </div>
-          <div className="bg-[#202B1D] border border-blue-500/20 p-3 rounded-xl">
+          </button>
+          <button
+            onClick={() => setStatCardFilter((f) => (f === "SEARCH_FALLBACK" ? "ALL" : "SEARCH_FALLBACK"))}
+            className={`text-left bg-[#202B1D] border p-3 rounded-xl transition-colors cursor-pointer hover:border-blue-400/60 ${
+              statCardFilter === "SEARCH_FALLBACK" ? "border-blue-400 ring-1 ring-blue-400/40" : "border-blue-500/20"
+            }`}
+          >
             <div className="text-blue-400 flex items-center gap-1 mb-1 font-medium">
               <Globe className="w-3.5 h-3.5" /> Google News Fallback
             </div>
             <div className="text-xl font-bold text-blue-300 font-mono">{stats.searchFallback}</div>
-          </div>
-          <div className="bg-[#202B1D] border border-amber-500/20 p-3 rounded-xl">
+          </button>
+          <button
+            onClick={() => setStatCardFilter((f) => (f === "REDIRECTED" ? "ALL" : "REDIRECTED"))}
+            className={`text-left bg-[#202B1D] border p-3 rounded-xl transition-colors cursor-pointer hover:border-amber-400/60 ${
+              statCardFilter === "REDIRECTED" ? "border-amber-400 ring-1 ring-amber-400/40" : "border-amber-500/20"
+            }`}
+          >
             <div className="text-amber-400 flex items-center gap-1 mb-1 font-medium">
               <AlertTriangle className="w-3.5 h-3.5" /> Redirected
             </div>
             <div className="text-xl font-bold text-amber-300 font-mono">{stats.redirected}</div>
-          </div>
-          <div className="bg-[#202B1D] border border-rose-500/20 p-3 rounded-xl">
+          </button>
+          <button
+            onClick={() => setStatCardFilter((f) => (f === "BROKEN" ? "ALL" : "BROKEN"))}
+            className={`text-left bg-[#202B1D] border p-3 rounded-xl transition-colors cursor-pointer hover:border-rose-400/60 ${
+              statCardFilter === "BROKEN" ? "border-rose-400 ring-1 ring-rose-400/40" : "border-rose-500/20"
+            }`}
+          >
             <div className="text-rose-400 flex items-center gap-1 mb-1 font-medium">
               <XCircle className="w-3.5 h-3.5" /> Broken / 404
             </div>
             <div className="text-xl font-bold text-rose-300 font-mono">{stats.broken}</div>
-          </div>
+          </button>
         </div>
+        {statCardFilter !== "ALL" && (
+          <div className="px-4 py-2 bg-[#182016] flex items-center gap-2 text-[11px] text-gray-400">
+            <span>Filtered to <span className="text-white font-semibold">{STAT_CARD_LABELS[statCardFilter]}</span> links only</span>
+            <button
+              onClick={() => setStatCardFilter("ALL")}
+              className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Filters & Search */}
         <div className="p-4 border-b border-[#2D3A28] flex flex-wrap gap-3 items-center justify-between bg-[#151C13]">
