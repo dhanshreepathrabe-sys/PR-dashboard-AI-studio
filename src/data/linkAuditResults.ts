@@ -26,7 +26,6 @@ export interface LinkAuditEntry {
 export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://www.ptinews.com": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.aninews.in": { status: "NO_PERMALINK", statusCode: 200 },
-  "https://www.prnewswire.com/news-releases/mintoak-thau-tom-cong-ty-cong-nghe-tai-chinh-icc-loyalty-co-tru-so-tai-trung-dong-302841288.html": { status: "BROKEN", statusCode: 404 },
   "https://www.prnewswire.co.uk/news-releases/icc-loyalty-joins-mintoak-to-build-a-unified-payments-and-engagement-os-for-banks-302841287.html": { status: "NO_PERMALINK", statusCode: 200 },
   "https://en.prnasia.com/releases/apac/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-542830.shtml": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.africa-newsroom.com/press/mintoak-acquires-middle-eastheadquartered-fintech-innovative-consumer-concepts-icc-loyalty?lang=en": { status: "NO_PERMALINK", statusCode: 200 },
@@ -64,7 +63,10 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://www.fiinews.com/2026/08/04/market-mintoak-acquires-dubais-icc-loyalty/": { status: "VALID", statusCode: 200 },
   "https://themalaysianreserve.com/2026/08/05/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty/": { status: "BROKEN", statusCode: 403 },
   "https://efficacy.africa/mintoak-expands-global-reach-with-acquisition-of-icc-loyalty/": { status: "VALID", statusCode: 0 },
-  "https://entarabi.com/en/2026/08/mintoak-acquires-dubai-based-icc-loyalty-to-expand-banking-engagement-platform/": { status: "VALID", statusCode: 200 },
+  // URL's "/en/" path serves the English edition, but the headline attached to it in the
+  // dataset is Arabic - the two don't match, and the real Arabic-language permalink (if one
+  // exists) is unverified, so this is treated as no confirmed permalink rather than trusted.
+  "https://entarabi.com/en/2026/08/mintoak-acquires-dubai-based-icc-loyalty-to-expand-banking-engagement-platform/": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.fintechfutures.com/2023/02/indias-mintoak-bags-20m-series-a-led-by-paypal-ventures/": { status: "NO_PERMALINK", statusCode: 301 },
   "https://jawlah.co/ar/2026/08/mintoak-acquires-icc-loyalty/": { status: "BROKEN", statusCode: 404 },
   "https://jawlah.co/en/2026/08/mintoak-acquires-icc-loyalty/": { status: "BROKEN", statusCode: 404 },
