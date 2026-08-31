@@ -1,0 +1,6 @@
+{
+  "name": "Mintoak AI PR Tracker",
+  "description": "AI-powered media intelligence, PR value analysis, sentiment tracking, and press coverage analytics for Mintoak.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
