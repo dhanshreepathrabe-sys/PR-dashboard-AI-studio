@@ -24,6 +24,9 @@ export interface LinkAuditEntry {
 
 // Keyed by the exact original URL as stored in the app's data sources.
 export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
+  // Real permalink supplied directly by a reviewer, replacing a confirmed-dead
+  // prnewswire.com URL that was fabricated for this dataset.
+  "https://www.vietnamplus.vn/mintoak-thau-tom-cong-ty-cong-nghe-tai-chinh-icc-loyalty-co-tru-so-tai-trung-dong-post1128026.vnp": { status: "VALID", statusCode: 200 },
   "https://www.ptinews.com": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.aninews.in": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.prnewswire.co.uk/news-releases/icc-loyalty-joins-mintoak-to-build-a-unified-payments-and-engagement-os-for-banks-302841287.html": { status: "NO_PERMALINK", statusCode: 200 },
@@ -32,7 +35,11 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://economictimes.indiatimes.com/tech/startups/mintoak-acquires-rewards-fintech-icc-loyalty-to-expand-bank-platform-in-west-asia-africa/articleshow/112260804.cms": { status: "BROKEN", statusCode: 404 },
   "https://www.business-standard.com/companies/news/mumbai-based-mintoak-acquires-icc-loyalty-to-deepen-presence-in-west-asia-126080401180_1.html": { status: "VALID", statusCode: 200 },
   "https://www.thehindubusinessline.com/money-and-banking/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty/article68481234.ece": { status: "BROKEN", statusCode: 301 },
-  "https://www.entrepreneur.com/en-in/news-and-trends/mintoak-acquires-uae-based-icc-loyalty/478120": { status: "REDIRECTED", statusCode: 301, finalUrl: "https://india.entrepreneur.com/news-and-trends/mintoak-acquires-uae-based-icc-loyalty/478120" },
+  // Also cited (ga-14) as the source for an unrelated "Raman Khanduja interview" story -
+  // the redirect target is real, but the same URL can't genuinely be the source for two
+  // different stories, so this is treated as no confirmed permalink like the other
+  // reused-URL cases rather than trusted at face value.
+  "https://www.entrepreneur.com/en-in/news-and-trends/mintoak-acquires-uae-based-icc-loyalty/478120": { status: "NO_PERMALINK", statusCode: 301 },
   "https://inc42.com/buzz/mintoak-acquires-uae-based-icc-loyalty-to-expand-fintech-stack-for-banks/": { status: "VALID", statusCode: 200 },
   "https://www.moneycontrol.com/news/business/startup/mintoak-acquires-dubai-based-icc-loyalty-to-expand-banking-software-12785401.html": { status: "BROKEN", statusCode: 301 },
   "https://www.ndtvprofit.com/business/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-1029481": { status: "BROKEN", statusCode: 403 },
