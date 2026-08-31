@@ -7,6 +7,11 @@
  * - bare homepages: the URL loads fine (200) but is just the publication's front page,
  *   not a permalink to the specific Mintoak article - recorded as NO_PERMALINK, since
  *   presenting it as "the article" would be inaccurate even though nothing errors.
+ * - reused URLs: the same URL is attached to several distinct headlines/events in this
+ *   dataset (e.g. one URL cited as the source for both a funding round and an unrelated
+ *   bank-partnership story). At most one of those headlines could genuinely be that
+ *   article, and there's no way to verify which (if any) without guessing - so every
+ *   headline sharing such a URL is also recorded as NO_PERMALINK.
  */
 export type LinkAuditStatus = "VALID" | "REDIRECTED" | "BROKEN" | "NO_PERMALINK";
 
@@ -22,9 +27,9 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://www.ptinews.com": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.aninews.in": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.prnewswire.com/news-releases/mintoak-thau-tom-cong-ty-cong-nghe-tai-chinh-icc-loyalty-co-tru-so-tai-trung-dong-302841288.html": { status: "BROKEN", statusCode: 404 },
-  "https://www.prnewswire.co.uk/news-releases/icc-loyalty-joins-mintoak-to-build-a-unified-payments-and-engagement-os-for-banks-302841287.html": { status: "VALID", statusCode: 200 },
-  "https://en.prnasia.com/releases/apac/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-542830.shtml": { status: "VALID", statusCode: 200 },
-  "https://www.africa-newsroom.com/press/mintoak-acquires-middle-eastheadquartered-fintech-innovative-consumer-concepts-icc-loyalty?lang=en": { status: "VALID", statusCode: 200 },
+  "https://www.prnewswire.co.uk/news-releases/icc-loyalty-joins-mintoak-to-build-a-unified-payments-and-engagement-os-for-banks-302841287.html": { status: "NO_PERMALINK", statusCode: 200 },
+  "https://en.prnasia.com/releases/apac/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-542830.shtml": { status: "NO_PERMALINK", statusCode: 200 },
+  "https://www.africa-newsroom.com/press/mintoak-acquires-middle-eastheadquartered-fintech-innovative-consumer-concepts-icc-loyalty?lang=en": { status: "NO_PERMALINK", statusCode: 200 },
   "https://economictimes.indiatimes.com/tech/startups/mintoak-acquires-rewards-fintech-icc-loyalty-to-expand-bank-platform-in-west-asia-africa/articleshow/112260804.cms": { status: "BROKEN", statusCode: 404 },
   "https://www.business-standard.com/companies/news/mumbai-based-mintoak-acquires-icc-loyalty-to-deepen-presence-in-west-asia-126080401180_1.html": { status: "VALID", statusCode: 200 },
   "https://www.thehindubusinessline.com/money-and-banking/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty/article68481234.ece": { status: "BROKEN", statusCode: 301 },
@@ -33,7 +38,7 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://www.moneycontrol.com/news/business/startup/mintoak-acquires-dubai-based-icc-loyalty-to-expand-banking-software-12785401.html": { status: "BROKEN", statusCode: 301 },
   "https://www.ndtvprofit.com/business/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-1029481": { status: "BROKEN", statusCode: 403 },
   "https://yourstory.com/2026/08/mintoak-acquires-dubai-icc-loyalty-fintech-banks": { status: "BROKEN", statusCode: 403 },
-  "https://entrackr.com/snippets/mintoak-acquires-loyalty-and-rewards-tech-company-icc-loyalty-12226636": { status: "VALID", statusCode: 200 },
+  "https://entrackr.com/snippets/mintoak-acquires-loyalty-and-rewards-tech-company-icc-loyalty-12226636": { status: "NO_PERMALINK", statusCode: 200 },
   "https://yourstory.com/2026/08/startup-roundup-mintoak-icc-loyalty": { status: "BROKEN", statusCode: 403 },
   "https://m.dailyhunt.in/news/india/english/mintoak+acquires+dubai+based+fintech+icc+loyalty-newsid-dh10293847": { status: "VALID", statusCode: 200 },
   "https://www.theasianbanker.com/updates-and-articles/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty": { status: "BROKEN", statusCode: 302 },
@@ -50,7 +55,7 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://streamline.co.ke/mintoak-acquires-icc-loyalty-african-banking/": { status: "BROKEN", statusCode: 404 },
   "https://www.gccbusinessnews.com/mintoak-acquires-uae-headquartered-fintech-icc-loyalty/": { status: "BROKEN", statusCode: 404 },
   "https://www.manilatimes.net/2026/08/04/tmt-newswire/pr-newswire/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty/2397617": { status: "VALID", statusCode: 200 },
-  "https://thepaypers.com/mergers-aquisitions-and-investments/news/mintoak-acquires-icc-loyalty-to-expand-engagement-platform": { status: "VALID", statusCode: 200 },
+  "https://thepaypers.com/mergers-aquisitions-and-investments/news/mintoak-acquires-icc-loyalty-to-expand-engagement-platform": { status: "NO_PERMALINK", statusCode: 200 },
   "https://thewire.in/business/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty": { status: "VALID", statusCode: 200 },
   "https://enterprise.news/egypt/en/news/story/mintoak-acquires-dubai-icc-loyalty": { status: "REDIRECTED", statusCode: 301, finalUrl: "https://enterpriseam.com/egypt/en/news/story/mintoak-acquires-dubai-icc-loyalty" },
   "https://www.ceoinsightsasia.com/news/mintoak-acquires-middle-east-based-fintech-icc-loyalty-cid-1829.html": { status: "BROKEN", statusCode: 404 },
@@ -60,7 +65,7 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://themalaysianreserve.com/2026/08/05/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty/": { status: "BROKEN", statusCode: 403 },
   "https://efficacy.africa/mintoak-expands-global-reach-with-acquisition-of-icc-loyalty/": { status: "VALID", statusCode: 0 },
   "https://entarabi.com/en/2026/08/mintoak-acquires-dubai-based-icc-loyalty-to-expand-banking-engagement-platform/": { status: "VALID", statusCode: 200 },
-  "https://www.fintechfutures.com/2023/02/indias-mintoak-bags-20m-series-a-led-by-paypal-ventures/": { status: "REDIRECTED", statusCode: 301, finalUrl: "https://www.fintechfutures.com/2023/02/indias-mintoak-bags-20m-series-a-led-by-paypal-ventures" },
+  "https://www.fintechfutures.com/2023/02/indias-mintoak-bags-20m-series-a-led-by-paypal-ventures/": { status: "NO_PERMALINK", statusCode: 301 },
   "https://jawlah.co/ar/2026/08/mintoak-acquires-icc-loyalty/": { status: "BROKEN", statusCode: 404 },
   "https://jawlah.co/en/2026/08/mintoak-acquires-icc-loyalty/": { status: "BROKEN", statusCode: 404 },
   "https://ibsintelligence.com/ibsi-news/banks-rethink-merchant-growth-interview-with-raman-khanduja-co-founder-and-ceo-at-mintoak/": { status: "BROKEN", statusCode: 403 },
@@ -73,7 +78,8 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://www.prnewswire.com/news-releases/mintoak-raises-20m-series-a-led-by-paypal-ventures-301754020.html": { status: "BROKEN", statusCode: 404 },
   "https://inc42.com/buzz/paypal-ventures-leads-20-mn-series-a-funding-in-mintoak/": { status: "BROKEN", statusCode: 404 },
   "https://www.vccircle.com/mintoak-snaps-up-20-mn-series-a-led-by-paypal-ventures": { status: "BROKEN", statusCode: 500 },
-  "https://theprint.in/economy/hdfc-bank-acquires-7-75-stake-in-mintoak-innovations/1264320/": { status: "VALID", statusCode: 200 },
+  "https://theprint.in/economy/hdfc-bank-acquires-7-75-stake-in-mintoak-innovations/1264320/": { status: "NO_PERMALINK", statusCode: 200 },
+  "https://www.paypal.vc/news/mintoak-raises-20m-series-a-led-by-paypal-ventures": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.thehindubusinessline.com/money-and-banking/hdfc-bank-to-acquire-775-stake-in-mintoak-for-311-cr/article66261298.ece": { status: "BROKEN", statusCode: 404 },
   "https://economictimes.indiatimes.com/industry/banking/finance/banking/hdfc-bank-launches-smarthub-vyapar-app-for-msmes/articleshow/94078201.cms": { status: "BROKEN", statusCode: 404 },
   "https://news.google.com/search?q=HDFC+Bank+SmartHub+Vyapar+Mintoak": { status: "VALID", statusCode: 302 },
@@ -81,7 +87,7 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://news.google.com/search?q=Axis+Bank+Mintoak+merchant+acquiring": { status: "VALID", statusCode: 302 },
   "https://www.zawya.com/en/business/fintech/emirates-islamic-bank-merchant-saas-mintoak": { status: "BROKEN", statusCode: 400 },
   "https://www.fintechfutures.com/2024/06/absa-bank-partners-with-mintoak-african-merchants/": { status: "REDIRECTED", statusCode: 301, finalUrl: "https://www.fintechfutures.com/2024/06/absa-bank-partners-with-mintoak-african-merchants" },
-  "https://thepaypers.com/payments-general/rakbank-selects-mintoak-uae-merchant-services/": { status: "VALID", statusCode: 200 },
+  "https://thepaypers.com/payments-general/rakbank-selects-mintoak-uae-merchant-services/": { status: "NO_PERMALINK", statusCode: 200 },
   "https://news.google.com/search?q=Raman+Khanduja+Mintoak+Forbes+India": { status: "VALID", statusCode: 302 },
   "https://www.business-standard.com/article/companies/hdfc-bank-to-buy-7-75-stake-in-fintech-startup-mintoak-for-rs-31-14-cr-122121401344_1.html": { status: "BROKEN", statusCode: 301 },
   "https://www.linkedin.com/company/mintoak-innovations-private-limited/": { status: "VALID", statusCode: 200 },
