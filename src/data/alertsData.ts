@@ -79,32 +79,6 @@ export const INITIAL_GOOGLE_ALERTS: GoogleAlertItem[] = [
     ]
   },
   {
-    id: "ga-03",
-    query: '"Sanjay Benny"',
-    personOrTopic: "Sanjay Benny (CPTO)",
-    category: "leadership",
-    sourceName: "Fintech Futures",
-    sourceType: "Industry Journal",
-    headline: "Engineering multi-tenant merchant acquiring stacks for Tier-1 Banks: Sanjay Benny",
-    snippet: "...According to <mark class='bg-yellow-200 font-semibold px-0.5 rounded'>Sanjay Benny</mark>, Co-founder & CPTO at <mark class='bg-yellow-200 font-semibold px-0.5 rounded'>Mintoak</mark>, architectural modularity is essential when integrating with legacy core-banking systems...",
-    url: "https://www.fintechfutures.com/2023/02/indias-mintoak-bags-20m-series-a-led-by-paypal-ventures/",
-    timestamp: "3 hrs ago",
-    date: "2026-08-28",
-    year: 2026,
-    era: "recent",
-    reach: 1200000,
-    matchedEntity: "Sanjay Benny, Co-founder & CPTO",
-    sentiment: "positive",
-    isNew: false,
-    fullBriefing: "Sanjay Benny, Chief Product & Technology Officer at Mintoak, breaks down the technical principles behind Mintoak's high-throughput acquiring architecture. Designed for 99.99% fault tolerance, the stack processes multi-million daily UPI, card, and QR transactions while maintaining ISO-compliant data isolation for Tier-1 banks.",
-    executiveQuote: "Our platform abstracts legacy core-banking complexity behind modern RESTful APIs, allowing banks to deploy new merchant features in days rather than quarters.",
-    keyTakeaways: [
-      "Sub-100ms API response latency for real-time payment reconciliation",
-      "Fully cloud-native, microservices-based deployment on secure hybrid infrastructure",
-      "Seamless multi-tenant white-label support for international bank acquirers"
-    ]
-  },
-  {
     id: "ga-04",
     query: '"Rama Tadepalli"',
     personOrTopic: "Rama Tadepalli (Co-Founder)",
