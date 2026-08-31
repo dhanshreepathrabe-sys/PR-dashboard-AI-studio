@@ -27,11 +27,12 @@ import {
   Calendar,
   Layers,
   ArrowUpDown,
-  Download
+  Download,
+  Link2Off
 } from "lucide-react";
 import { GoogleAlertItem, INITIAL_GOOGLE_ALERTS, GOOGLE_ALERTS_QUERIES } from "../data/alertsData";
 import { MediaMention } from "../types";
-import { ensureAbsoluteUrl, isValidArticleUrl } from "../utils/linkHelper";
+import { ensureAbsoluteUrl, isValidArticleUrl, getGoogleNewsSearchUrl } from "../utils/linkHelper";
 
 interface GoogleAlertsLiveFeedProps {
   onSelectMention?: (mention: MediaMention) => void;
@@ -769,16 +770,38 @@ export const GoogleAlertsLiveFeed: React.FC<GoogleAlertsLiveFeedProps> = ({ onSe
                         )}
                       </button>
 
-                      <a
-                        href={ensureAbsoluteUrl(item.url, item.headline, item.sourceName, item.query)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-extrabold text-[11px] text-[#48821C] hover:text-[#1C2319] bg-[#EDF6E2] hover:bg-[#80C341]/30 px-2.5 py-1 rounded-lg border border-[#80C341]/40 transition-colors cursor-pointer"
-                        title="Open live source coverage"
-                      >
-                        <span>Open Source</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                      </a>
+                      {isValidArticleUrl(item.url, { id: item.id, headline: item.headline, publication: item.sourceName }) ? (
+                        <a
+                          href={ensureAbsoluteUrl(item.url, item.headline, item.sourceName, item.query)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-extrabold text-[11px] text-[#48821C] hover:text-[#1C2319] bg-[#EDF6E2] hover:bg-[#80C341]/30 px-2.5 py-1 rounded-lg border border-[#80C341]/40 transition-colors cursor-pointer"
+                          title="Open live source coverage"
+                        >
+                          <span>Open Source</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <>
+                          <span
+                            className="inline-flex items-center gap-1 font-bold text-[11px] text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed"
+                            title="Direct source permalink is unavailable"
+                          >
+                            <Link2Off className="w-3 h-3" />
+                            <span>Link Unavailable</span>
+                          </span>
+                          <a
+                            href={ensureAbsoluteUrl(getGoogleNewsSearchUrl(item.headline, item.sourceName))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-extrabold text-[11px] text-[#48821C] hover:text-[#1C2319] bg-[#EDF6E2] hover:bg-[#80C341]/30 px-2.5 py-1 rounded-lg border border-[#80C341]/40 transition-colors cursor-pointer"
+                            title="Search live indexed coverage on Google News"
+                          >
+                            <Search className="w-3 h-3" />
+                            <span>Google News</span>
+                          </a>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1184,15 +1207,25 @@ export const GoogleAlertsLiveFeed: React.FC<GoogleAlertsLiveFeedProps> = ({ onSe
                   <span>Google News Results</span>
                 </a>
 
-                <a
-                  href={ensureAbsoluteUrl(selectedAlertModal.url, selectedAlertModal.headline, selectedAlertModal.sourceName, selectedAlertModal.query)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-black text-[#1C2319] bg-[#80C341] hover:bg-[#6fae33] px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  <span>Open Source</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </a>
+                {isValidArticleUrl(selectedAlertModal.url, { id: selectedAlertModal.id, headline: selectedAlertModal.headline, publication: selectedAlertModal.sourceName }) ? (
+                  <a
+                    href={ensureAbsoluteUrl(selectedAlertModal.url, selectedAlertModal.headline, selectedAlertModal.sourceName, selectedAlertModal.query)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-black text-[#1C2319] bg-[#80C341] hover:bg-[#6fae33] px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>Open Source</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 cursor-not-allowed"
+                    title="Direct source permalink is unavailable"
+                  >
+                    <Link2Off className="w-3.5 h-3.5" />
+                    <span>Link Unavailable</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
