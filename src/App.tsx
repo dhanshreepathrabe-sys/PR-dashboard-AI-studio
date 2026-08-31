@@ -46,6 +46,7 @@ import { SocialListeningStudio } from "./components/SocialListeningStudio";
 import { RegionalPickupsStudio } from "./components/RegionalPickupsStudio";
 import { ExecutiveReportGeneratorModal } from "./components/ExecutiveReportGeneratorModal";
 import { ExecutiveCampaignReportModal } from "./components/ExecutiveCampaignReportModal";
+import { LinkHealthAuditModal } from "./components/LinkHealthAuditModal";
 import { GoogleAlertsLiveFeed } from "./components/GoogleAlertsLiveFeed";
 
 const TAB_TITLES: Record<string, string> = {
@@ -89,6 +90,7 @@ export default function App() {
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
+  const [isLinkHealthAuditOpen, setIsLinkHealthAuditOpen] = useState(false);
   const [reportModalCampaign, setReportModalCampaign] = useState<string>("GCC & Middle East Expansion (ICC Loyalty)");
 
   const handleOpenCampaignReport = (campaignName?: string) => {
@@ -347,6 +349,7 @@ export default function App() {
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
         onOpenCampaignPdfReport={() => handleOpenCampaignReport()}
+        onOpenLinkHealthAudit={() => setIsLinkHealthAuditOpen(true)}
         onDownloadCSV={handleDownloadCSV}
         onDownloadExcel={handleDownloadExcel}
         onRefreshData={handleRefreshData}
@@ -1132,6 +1135,12 @@ export default function App() {
         filters={filters}
         mentions={filteredMentions}
         availableCampaigns={availableCampaigns}
+      />
+
+      {/* Link Health & Audit Registry */}
+      <LinkHealthAuditModal
+        isOpen={isLinkHealthAuditOpen}
+        onClose={() => setIsLinkHealthAuditOpen(false)}
       />
     </div>
   );

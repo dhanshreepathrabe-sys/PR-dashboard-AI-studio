@@ -1,14 +1,18 @@
 /**
  * Link Validation, Extraction & Sanitization Engine for Mintoak PR Portal
- * 
+ *
  * Strict Guarantees:
  * 1. Preserves raw absolute URLs EXACTLY without rewriting paths, parameters, or domains.
- * 2. Never redirects valid absolute external URLs to search engines or synthetic endpoints.
+ * 2. Never redirects valid absolute external URLs to search engines or synthetic endpoints,
+ *    UNLESS a live audit (see ../data/linkAuditResults.ts) has confirmed the URL is dead or
+ *    redirects to an unrelated page - accuracy takes priority over preserving a stale link.
  * 3. Prepends https:// only when a valid domain/path is supplied without protocol.
  * 4. Provides clear validation so UI can display a 'Link Unavailable' state when a valid URL is absent.
  * 5. Provides Google News search URL generator for real-time live coverage indexing.
  * 6. Extensively logs raw input vs output to the console for complete traceability.
  */
+
+import { LINK_AUDIT_RESULTS } from "../data/linkAuditResults";
 
 export interface ValidatedArticleLink {
   isValid: boolean;
@@ -73,6 +77,10 @@ export function isValidArticleUrl(
   let fullUrl = trimmed;
   if (!/^https?:\/\//i.test(fullUrl)) {
     fullUrl = `https://${fullUrl}`;
+  }
+
+  if (LINK_AUDIT_RESULTS[trimmed]?.status === "BROKEN") {
+    return false;
   }
 
   try {
@@ -187,6 +195,36 @@ export function validateAndPreserveUrl(
         isDirectPermalink: false,
         wasModified: true,
         reason: `Invalid hostname "${parsed.hostname}"`
+      };
+    }
+
+    // 5. Cross-check against the live link-health audit: a link that parses fine can
+    // still be dead (404) or redirect to an unrelated page (a reused CMS slug).
+    const audit = LINK_AUDIT_RESULTS[trimmed];
+    if (audit?.status === "BROKEN") {
+      console.warn(`[LinkHelper] Audit confirms dead/mismatched link: "${trimmed}" (HTTP ${audit.statusCode})`);
+      const fallbackUrl = getGoogleNewsSearchUrl(headline, pub, person);
+      console.log(`[LinkHelper] Output (Audit-Broken Fallback):`, fallbackUrl);
+      console.groupEnd?.();
+      return {
+        isValid: false,
+        url: fallbackUrl,
+        displayState: "unavailable",
+        isDirectPermalink: false,
+        wasModified: true,
+        reason: `Audit confirmed dead or mismatched link (HTTP ${audit.statusCode})`
+      };
+    }
+    if (audit?.status === "REDIRECTED" && audit.finalUrl) {
+      console.info(`[LinkHelper] Audit confirms redirect to same article: "${trimmed}" -> "${audit.finalUrl}"`);
+      console.groupEnd?.();
+      return {
+        isValid: true,
+        url: audit.finalUrl,
+        displayState: "available",
+        isDirectPermalink: true,
+        wasModified: audit.finalUrl !== rawUrl,
+        reason: "Redirected to verified canonical URL"
       };
     }
 

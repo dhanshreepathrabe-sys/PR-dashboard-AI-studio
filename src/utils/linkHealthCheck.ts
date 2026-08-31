@@ -2,7 +2,8 @@ import { INITIAL_MENTIONS } from "../data";
 import { INITIAL_GOOGLE_ALERTS } from "../data/alertsData";
 import { ALL_1202_PICKUPS } from "../data/pickupsData";
 import { EXTERNAL_SOCIAL_POSTS } from "../data";
-import { isValidArticleUrl, ensureAbsoluteUrl } from "./linkHelper";
+import { ensureAbsoluteUrl } from "./linkHelper";
+import { LINK_AUDIT_RESULTS } from "../data/linkAuditResults";
 
 export interface LinkHealthRecord {
   id: string;
@@ -19,6 +20,27 @@ export interface LinkHealthRecord {
   notes?: string;
 }
 
+const LAST_AUDIT_TIMESTAMP = new Date().toISOString();
+
+/** Looks up the real, previously-audited HTTP status for a URL rather than assuming it works. */
+function resolveHealth(url: string): Pick<LinkHealthRecord, "status" | "statusCode" | "finalUrl" | "notes"> {
+  const audit = LINK_AUDIT_RESULTS[url.trim()];
+  if (!audit) {
+    return { status: "UNVERIFIED", notes: "Not yet included in the last link audit run." };
+  }
+  return {
+    status: audit.status,
+    statusCode: audit.statusCode,
+    finalUrl: audit.finalUrl,
+    notes:
+      audit.status === "BROKEN"
+        ? "Confirmed dead or redirects to an unrelated page - falls back to Google News search."
+        : audit.status === "REDIRECTED"
+        ? "Redirects to a confirmed canonical URL for the same article."
+        : undefined
+  };
+}
+
 export function getAllAppUrls(): LinkHealthRecord[] {
   const records: LinkHealthRecord[] = [];
 
@@ -32,9 +54,8 @@ export function getAllAppUrls(): LinkHealthRecord[] {
         publication: m.publication,
         originalUrl: m.url,
         sanitizedUrl: ensureAbsoluteUrl(m.url, m.headline, m.publication),
-        status: isValidArticleUrl(m.url) ? "VALID" : "UNVERIFIED",
-        statusCode: 200,
-        lastChecked: new Date().toISOString()
+        ...resolveHealth(m.url),
+        lastChecked: LAST_AUDIT_TIMESTAMP
       });
     }
   });
@@ -49,9 +70,8 @@ export function getAllAppUrls(): LinkHealthRecord[] {
         publication: a.sourceName,
         originalUrl: a.url,
         sanitizedUrl: ensureAbsoluteUrl(a.url, a.headline, a.sourceName),
-        status: isValidArticleUrl(a.url) ? "VALID" : "UNVERIFIED",
-        statusCode: 200,
-        lastChecked: new Date().toISOString()
+        ...resolveHealth(a.url),
+        lastChecked: LAST_AUDIT_TIMESTAMP
       });
     }
   });
@@ -66,9 +86,8 @@ export function getAllAppUrls(): LinkHealthRecord[] {
         publication: p.outletName,
         originalUrl: p.url,
         sanitizedUrl: ensureAbsoluteUrl(p.url, p.headline, p.outletName),
-        status: isValidArticleUrl(p.url) ? "VALID" : "UNVERIFIED",
-        statusCode: 200,
-        lastChecked: new Date().toISOString()
+        ...resolveHealth(p.url),
+        lastChecked: LAST_AUDIT_TIMESTAMP
       });
     }
   });
@@ -83,9 +102,8 @@ export function getAllAppUrls(): LinkHealthRecord[] {
         publication: s.platform,
         originalUrl: s.postUrl,
         sanitizedUrl: ensureAbsoluteUrl(s.postUrl, s.content, s.platform),
-        status: isValidArticleUrl(s.postUrl) ? "VALID" : "UNVERIFIED",
-        statusCode: 200,
-        lastChecked: new Date().toISOString()
+        ...resolveHealth(s.postUrl),
+        lastChecked: LAST_AUDIT_TIMESTAMP
       });
     }
   });

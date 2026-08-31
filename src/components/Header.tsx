@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Plus, Search, Menu, X, Download, RefreshCw, FileText } from "lucide-react";
+import { Sparkles, Plus, Search, Menu, X, Download, RefreshCw, FileText, ShieldCheck } from "lucide-react";
 import { FilterState } from "../types";
 
 interface HeaderProps {
@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenAddModal: () => void;
   onOpenAIChat: () => void;
   onOpenCampaignPdfReport?: () => void;
+  onOpenLinkHealthAudit?: () => void;
   onDownloadCSV: () => void;
   onDownloadExcel: () => void;
   onRefreshData: () => void;
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddModal,
   onOpenAIChat,
   onOpenCampaignPdfReport,
+  onOpenLinkHealthAudit,
   onDownloadCSV,
   onDownloadExcel,
   onRefreshData,
@@ -182,6 +184,18 @@ export const Header: React.FC<HeaderProps> = ({
             <Plus className="w-3.5 h-3.5 text-slate-600" />
             <span className="hidden xl:inline">Add Mention</span>
           </button>
+
+          {/* Link Health Audit Button */}
+          {onOpenLinkHealthAudit && (
+            <button
+              onClick={onOpenLinkHealthAudit}
+              className="flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold px-2.5 py-2 rounded-xl transition-all cursor-pointer"
+              title="Audit every external link in the dashboard against its real HTTP status"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
+              <span className="hidden xl:inline">Link Health</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

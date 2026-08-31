@@ -55,8 +55,18 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
     const redirected = records.filter((r) => r.status === "REDIRECTED").length;
     const broken = records.filter((r) => r.status === "BROKEN" || r.status === "PAGE NOT FOUND").length;
     const unverified = records.filter((r) => r.status === "UNVERIFIED").length;
-    return { total, valid, redirected, broken, unverified };
+    const searchFallback = records.filter((r) => r.originalUrl.includes("news.google.com/search")).length;
+    return { total, valid, redirected, broken, unverified, searchFallback };
   }, [records]);
+
+  const STATUS_STYLES: Record<LinkHealthRecord["status"], { label: string; className: string }> = {
+    VALID: { label: "HTTP 200 OK", className: "bg-emerald-950/80 text-emerald-400 border-emerald-800/60" },
+    REDIRECTED: { label: "Redirected (verified)", className: "bg-amber-950/80 text-amber-400 border-amber-800/60" },
+    BROKEN: { label: "Broken / Dead Link", className: "bg-rose-950/80 text-rose-400 border-rose-800/60" },
+    "PAGE NOT FOUND": { label: "404 Not Found", className: "bg-rose-950/80 text-rose-400 border-rose-800/60" },
+    UNVERIFIED: { label: "Unverified", className: "bg-slate-800/80 text-gray-400 border-slate-700/60" },
+    CHECKING: { label: "Checking...", className: "bg-slate-800/80 text-gray-400 border-slate-700/60" }
+  };
 
   const handleCopy = (id: string, url: string) => {
     navigator.clipboard.writeText(url);
@@ -127,9 +137,9 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
           </div>
           <div className="bg-[#202B1D] border border-blue-500/20 p-3 rounded-xl">
             <div className="text-blue-400 flex items-center gap-1 mb-1 font-medium">
-              <Globe className="w-3.5 h-3.5" /> Canonical Wire/News
+              <Globe className="w-3.5 h-3.5" /> Google News Fallback
             </div>
-            <div className="text-xl font-bold text-blue-300 font-mono">{stats.valid}</div>
+            <div className="text-xl font-bold text-blue-300 font-mono">{stats.searchFallback}</div>
           </div>
           <div className="bg-[#202B1D] border border-amber-500/20 p-3 rounded-xl">
             <div className="text-amber-400 flex items-center gap-1 mb-1 font-medium">
@@ -195,8 +205,12 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
                     <span className="font-semibold text-gray-200 truncate max-w-xs md:max-w-md">
                       {r.publication}
                     </span>
-                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono">
-                      HTTP 200 OK
+                    <span
+                      className={`px-1.5 py-0.2 rounded text-[10px] border font-mono ${STATUS_STYLES[r.status].className}`}
+                      title={r.notes}
+                    >
+                      {STATUS_STYLES[r.status].label}
+                      {typeof r.statusCode === "number" && r.statusCode > 0 ? ` (${r.statusCode})` : ""}
                     </span>
                   </div>
                   <div className="text-gray-300 font-medium line-clamp-1 mb-1">
@@ -208,6 +222,12 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
                       {r.sanitizedUrl}
                     </span>
                   </div>
+                  {r.status === "REDIRECTED" && r.finalUrl && (
+                    <div className="text-amber-500/80 font-mono text-[11px] truncate flex items-center gap-1.5">
+                      <span className="text-amber-400 shrink-0">→ Verified target:</span>
+                      <span>{r.finalUrl}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
