@@ -79,7 +79,8 @@ export function isValidArticleUrl(
     fullUrl = `https://${fullUrl}`;
   }
 
-  if (LINK_AUDIT_RESULTS[trimmed]?.status === "BROKEN") {
+  const auditedStatus = LINK_AUDIT_RESULTS[trimmed]?.status;
+  if (auditedStatus === "BROKEN" || auditedStatus === "NO_PERMALINK") {
     return false;
   }
 
@@ -199,12 +200,17 @@ export function validateAndPreserveUrl(
     }
 
     // 5. Cross-check against the live link-health audit: a link that parses fine can
-    // still be dead (404) or redirect to an unrelated page (a reused CMS slug).
+    // still be dead (404), redirect to an unrelated page (a reused CMS slug), or just
+    // be the publication's homepage rather than a permalink to the specific article.
     const audit = LINK_AUDIT_RESULTS[trimmed];
-    if (audit?.status === "BROKEN") {
-      console.warn(`[LinkHelper] Audit confirms dead/mismatched link: "${trimmed}" (HTTP ${audit.statusCode})`);
+    if (audit?.status === "BROKEN" || audit?.status === "NO_PERMALINK") {
+      const reason =
+        audit.status === "NO_PERMALINK"
+          ? `Only the publisher's homepage is available, not a permalink to this article (HTTP ${audit.statusCode})`
+          : `Audit confirmed dead or mismatched link (HTTP ${audit.statusCode})`;
+      console.warn(`[LinkHelper] ${reason}: "${trimmed}"`);
       const fallbackUrl = getGoogleNewsSearchUrl(headline, pub, person);
-      console.log(`[LinkHelper] Output (Audit-Broken Fallback):`, fallbackUrl);
+      console.log(`[LinkHelper] Output (Audit Fallback):`, fallbackUrl);
       console.groupEnd?.();
       return {
         isValid: false,
@@ -212,7 +218,7 @@ export function validateAndPreserveUrl(
         displayState: "unavailable",
         isDirectPermalink: false,
         wasModified: true,
-        reason: `Audit confirmed dead or mismatched link (HTTP ${audit.statusCode})`
+        reason
       };
     }
     if (audit?.status === "REDIRECTED" && audit.finalUrl) {

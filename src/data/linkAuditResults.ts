@@ -1,11 +1,14 @@
 /**
  * Real HTTP link-health audit results for every external URL referenced in this app.
  * Generated from a live audit (see scripts/fast_audit.ts + audit_results.json) and
- * manually reviewed to catch soft-404s: redirects that resolve to an unrelated page
- * (a reused CMS slug pointing at a different article, or a bare homepage) are recorded
- * as BROKEN rather than trusted at face value.
+ * manually reviewed to catch two things a raw HTTP status can't tell you:
+ * - soft-404s: redirects that resolve to an unrelated page (a reused CMS slug pointing
+ *   at a different article, or a bare homepage) - recorded as BROKEN.
+ * - bare homepages: the URL loads fine (200) but is just the publication's front page,
+ *   not a permalink to the specific Mintoak article - recorded as NO_PERMALINK, since
+ *   presenting it as "the article" would be inaccurate even though nothing errors.
  */
-export type LinkAuditStatus = "VALID" | "REDIRECTED" | "BROKEN";
+export type LinkAuditStatus = "VALID" | "REDIRECTED" | "BROKEN" | "NO_PERMALINK";
 
 export interface LinkAuditEntry {
   status: LinkAuditStatus;
@@ -16,8 +19,8 @@ export interface LinkAuditEntry {
 
 // Keyed by the exact original URL as stored in the app's data sources.
 export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
-  "https://www.ptinews.com": { status: "VALID", statusCode: 200 },
-  "https://www.aninews.in": { status: "VALID", statusCode: 200 },
+  "https://www.ptinews.com": { status: "NO_PERMALINK", statusCode: 200 },
+  "https://www.aninews.in": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.prnewswire.com/news-releases/mintoak-thau-tom-cong-ty-cong-nghe-tai-chinh-icc-loyalty-co-tru-so-tai-trung-dong-302841288.html": { status: "BROKEN", statusCode: 404 },
   "https://www.prnewswire.co.uk/news-releases/icc-loyalty-joins-mintoak-to-build-a-unified-payments-and-engagement-os-for-banks-302841287.html": { status: "VALID", statusCode: 200 },
   "https://en.prnasia.com/releases/apac/mintoak-acquires-middle-east-headquartered-fintech-icc-loyalty-542830.shtml": { status: "VALID", statusCode: 200 },
@@ -85,8 +88,8 @@ export const LINK_AUDIT_RESULTS: Record<string, LinkAuditEntry> = {
   "https://cio.economictimes.indiatimes.com/news/strategy-and-management/axis-bank-mintoak-merchant-platform/10523412": { status: "BROKEN", statusCode: 301 },
   "https://fintechbrainfood.substack.com": { status: "BROKEN", statusCode: 404 },
   "https://gulfnews.com/business/fintech": { status: "BROKEN", statusCode: 404 },
-  "https://www.cnbctv18.com": { status: "VALID", statusCode: 200 },
-  "https://asia.money2020.com": { status: "VALID", statusCode: 200 },
+  "https://www.cnbctv18.com": { status: "NO_PERMALINK", statusCode: 200 },
+  "https://asia.money2020.com": { status: "NO_PERMALINK", statusCode: 200 },
   "https://www.finextra.com/newsarticle/42150/absa-bank-partners-with-mintoak-african-merchants": { status: "BROKEN", statusCode: 403 },
   "https://technode.global/2024/02/11/building-bank-grade-microservices-sanjay-benny-mintoak/": { status: "BROKEN", statusCode: 403 },
   "https://economictimes.indiatimes.com/tech/funding/mintoak-raises-20-million-led-by-paypal-ventures-to-expand-overseas/articleshow/98177402.cms": { status: "BROKEN", statusCode: 404 },

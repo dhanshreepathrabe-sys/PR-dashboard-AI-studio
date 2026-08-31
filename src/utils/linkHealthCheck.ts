@@ -13,7 +13,7 @@ export interface LinkHealthRecord {
   publication: string;
   originalUrl: string;
   sanitizedUrl: string;
-  status: "VALID" | "REDIRECTED" | "BROKEN" | "PAGE NOT FOUND" | "UNVERIFIED" | "CHECKING";
+  status: "VALID" | "REDIRECTED" | "BROKEN" | "PAGE NOT FOUND" | "NO_PERMALINK" | "UNVERIFIED" | "CHECKING";
   statusCode?: number;
   finalUrl?: string;
   lastChecked?: string;
@@ -35,6 +35,8 @@ function resolveHealth(url: string): Pick<LinkHealthRecord, "status" | "statusCo
     notes:
       audit.status === "BROKEN"
         ? "Confirmed dead or redirects to an unrelated page - falls back to Google News search."
+        : audit.status === "NO_PERMALINK"
+        ? "Only the publisher's homepage is available, not the specific article - falls back to Google News search."
         : audit.status === "REDIRECTED"
         ? "Redirects to a confirmed canonical URL for the same article."
         : undefined

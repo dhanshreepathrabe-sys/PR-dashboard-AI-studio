@@ -53,7 +53,9 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
     const total = records.length;
     const valid = records.filter((r) => r.status === "VALID").length;
     const redirected = records.filter((r) => r.status === "REDIRECTED").length;
-    const broken = records.filter((r) => r.status === "BROKEN" || r.status === "PAGE NOT FOUND").length;
+    const broken = records.filter(
+      (r) => r.status === "BROKEN" || r.status === "PAGE NOT FOUND" || r.status === "NO_PERMALINK"
+    ).length;
     const unverified = records.filter((r) => r.status === "UNVERIFIED").length;
     const searchFallback = records.filter((r) => r.originalUrl.includes("news.google.com/search")).length;
     return { total, valid, redirected, broken, unverified, searchFallback };
@@ -64,6 +66,7 @@ export const LinkHealthAuditModal: React.FC<LinkHealthAuditModalProps> = ({
     REDIRECTED: { label: "Redirected (verified)", className: "bg-amber-950/80 text-amber-400 border-amber-800/60" },
     BROKEN: { label: "Broken / Dead Link", className: "bg-rose-950/80 text-rose-400 border-rose-800/60" },
     "PAGE NOT FOUND": { label: "404 Not Found", className: "bg-rose-950/80 text-rose-400 border-rose-800/60" },
+    NO_PERMALINK: { label: "Homepage Only (no permalink)", className: "bg-orange-950/80 text-orange-400 border-orange-800/60" },
     UNVERIFIED: { label: "Unverified", className: "bg-slate-800/80 text-gray-400 border-slate-700/60" },
     CHECKING: { label: "Checking...", className: "bg-slate-800/80 text-gray-400 border-slate-700/60" }
   };
